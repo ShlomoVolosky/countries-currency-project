@@ -1,233 +1,118 @@
-# Countries Data Processing Project
+# Countries Currency Exchange Project
 
-This project fetches country data from REST Countries API, processes currency exchange rates, and stores the information in a PostgreSQL database with automated scheduling capabilities.
+A simple Python project that **gets exchange rates from each currency to ILS (Israeli Shekel)**. This is a basic proof-of-concept version that demonstrates the core functionality.
 
-## Features
+## What It Does
 
-- **Part 1**: Fetch and process countries data including names, capitals, continents, currencies, UN membership, population, and current times by timezone
-- **Part 2**: Fetch currency exchange rates relative to Israeli Shekel (ILS) for all countries' currencies
-- **Part 3**: Automated scheduling system for periodic data updates
+This project fetches country data and their currencies, then gets the current exchange rates for each currency relative to the Israeli Shekel (ILS). For example:
+- 1 USD = 3.34 ILS
+- 1 EUR = 3.90 ILS  
+- 1 GBP = 4.50 ILS
 
-## Prerequisites
+## Project Structure
 
-- Python 3.8+
-- PostgreSQL 12+
-- Zorin OS (or any Debian/Ubuntu-based Linux distribution)
+```
+countries-currency-project/
+├── src/                    # Main source code
+│   ├── config.py          # Database and API configuration
+│   ├── database.py        # PostgreSQL database operations
+│   ├── part1_countries.py # Fetches countries data from REST Countries API
+│   ├── part2_currencies.py # Gets currency exchange rates to ILS
+│   └── part3_scheduler.py # Automated scheduler for updates
+├── tests/                 # Test files
+│   ├── test_db_conn.py    # Database connection tests
+│   ├── test_part1_countries.py # Countries processing tests
+│   ├── test_part2_currencies.py # Currency processing tests
+│   └── test_part3_scheduler.py # Scheduler tests
+├── sql/
+│   └── create_tables.sql  # Database schema (countries & currency_rates tables)
+├── requirements.txt       # Python dependencies
+└── countries-currency.md  # This file
+```
 
-## Installation Instructions
+## Quick Start
 
-### 1. Install PostgreSQL on Zorin OS
+### 1. Install Requirements
 
 ```bash
-# Update system packages
-sudo apt update
-sudo apt upgrade -y
-
 # Install PostgreSQL
 sudo apt install postgresql postgresql-contrib -y
-
-# Start and enable PostgreSQL service
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-```
-
-### 2. Create Database and User
-
-```bash
-# Switch to postgres user
-sudo -u postgres psql
-
-# In PostgreSQL prompt, run:
-CREATE DATABASE countries_db;
-CREATE USER countries_user WITH PASSWORD 'your_password_here';
-GRANT ALL PRIVILEGES ON DATABASE countries_db TO countries_user;
-\q
-```
-
-### 3. Setup Project
-
-```bash
-# Clone or create project directory
-mkdir countries-project
-cd countries-project
 
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
-pip install psycopg2-binary requests schedule pytest python-dotenv pytz
+# Install Python packages
+pip install -r requirements.txt
 ```
 
-### 4. Configure Environment
-
-Create `.env` file in project root:
-```bash
-DB_HOST=localhost
-DB_NAME=countries_db
-DB_USER=countries_user
-DB_PASSWORD=your_password_here
-DB_PORT=5432
-```
-
-### 5. Create Database Tables
+### 2. Setup Database
 
 ```bash
-# Create tables using the provided SQL script
+# Create database and user
+sudo -u postgres psql
+CREATE DATABASE countries_db;
+CREATE USER countries_user WITH PASSWORD 'password123';
+GRANT ALL PRIVILEGES ON DATABASE countries_db TO countries_user;
+\q
+
+# Create tables
 psql -U countries_user -d countries_db -h localhost -f sql/create_tables.sql
 ```
 
-## Project Structure
+### 3. Configure Environment
 
+Create `.env` file:
 ```
-countries-project/
-├── .env                     # Environment variables
-├── .gitignore              # Git ignore file
-├── requirements.txt        # Python dependencies
-├── README.md              # This file
-├── src/                   # Source code
-│   ├── config.py          # Configuration management
-│   ├── database.py        # Database operations
-│   ├── part1_countries.py # Countries data processing
-│   ├── part2_currencies.py # Currency rates processing
-│   └── part3_scheduler.py # Automated scheduling
-├── tests/                 # Test files
-│   ├── test_db_connection.py
-│   ├── test_part1.py
-│   ├── test_part2.py
-│   └── test_part3.py
-└── sql/
-    └── create_tables.sql  # Database schema
+DB_HOST=localhost
+DB_NAME=countries_db
+DB_USER=countries_user
+DB_PASSWORD=password123
+DB_PORT=5432
 ```
 
-## Usage
+### 4. Run the Project
 
-### Running Individual Components
+```bash
+# Option 1: Run everything at once
+python src/part3_scheduler.py
+# Choose option 1 for initial setup
 
-1. **Process Countries Data (Part 1)**:
-   ```bash
-   python src/part1_countries.py
-   ```
+# Option 2: Run parts separately
+python src/part1_countries.py  # Load countries data
+python src/part2_currencies.py # Get currency rates
+```
 
-2. **Process Currency Rates (Part 2)**:
-   ```bash
-   python src/part2_currencies.py
-   ```
+## How It Works
 
-3. **Run Automated Scheduler (Part 3)**:
-   ```bash
-   python src/part3_scheduler.py
-   ```
+1. **Part 1** (`part1_countries.py`): Fetches 250 countries from REST Countries API and stores them in PostgreSQL
+2. **Part 2** (`part2_currencies.py`): Gets exchange rates for each country's currencies relative to ILS using Frankfurter API
+3. **Part 3** (`part3_scheduler.py`): Automated scheduler that can run updates periodically
 
-### Scheduler Options
+## APIs Used
 
-When running the scheduler, you'll see these options:
-- **Option 1**: Run initial setup (loads all data immediately)
-- **Option 2**: Start automated scheduler (runs updates on schedule)
-- **Option 3**: Run countries update only
-- **Option 4**: Run currency update only
+- **REST Countries API**: https://restcountries.com/v3.1/all (for country data)
+- **Frankfurter API**: https://api.frankfurter.app (for currency exchange rates)
 
-### Running Tests
+## Testing
 
 ```bash
 # Run all tests
 pytest tests/ -v
 
-# Run specific test files
-pytest tests/test_db_connection.py -v
-pytest tests/test_part1.py -v
-pytest tests/test_part2.py -v
-pytest tests/test_part3.py -v
+# Run specific tests
+pytest tests/test_part1_countries.py -v
+pytest tests/test_part2_currencies.py -v
 ```
 
-## Scheduled Updates
+## Database Tables
 
-The automated scheduler runs:
-- **Countries Data**: Weekly on Sunday at 02:00 (countries data changes infrequently)
-- **Currency Rates**: Every 6 hours (exchange rates change frequently)
+- **countries**: Stores country information (name, capitals, currencies, etc.)
+- **currency_rates**: Stores exchange rates (currency_code, shekel_rate, date)
 
-## Database Schema
+## Note
 
-### Countries Table
-- `country_name`: Name of the country
-- `capitals`: Array of capital cities
-- `continent`: Continent where country is located
-- `currencies`: Array of currency codes
-- `is_un_member`: Boolean indicating UN membership
-- `population`: Country population
-- `current_time`: JSON object with timezone information
-- `created_at`, `updated_at`: Timestamps
-
-### Currency Rates Table
-- `country_name`: Name of the country
-- `currency_code`: Currency code (e.g., USD, EUR)
-- `shekel_rate`: Exchange rate relative to ILS
-- `rate_date`: Date of the rate
-- `created_at`: Timestamp
-
-## APIs Used
-
-1. **REST Countries API**: https://restcountries.com/v3.1/all
-   - Provides comprehensive country information
-   
-2. **Frankfurter API**: https://api.frankfurter.app
-   - Provides currency exchange rates
-
-## Architecture Design
-
-### Data Flow
-1. **Countries Data**: REST Countries API → Data Processing → PostgreSQL
-2. **Currency Rates**: Database (countries) → Frankfurter API → Data Processing → PostgreSQL
-3. **Scheduling**: Automated cron-like scheduler manages both workflows
-
-### Key Components
-- **Configuration Management**: Centralized config with environment variables
-- **Database Layer**: PostgreSQL with connection pooling and error handling
-- **API Clients**: HTTP clients with retry logic and error handling
-- **Scheduler**: Python schedule library for automated execution
-- **Testing**: Comprehensive test suite with mocking
-
-### Error Handling
-- Database connection failures
-- API rate limiting and timeouts
-- Missing or invalid data fields
-- Timezone processing errors
-- Currency rate lookup failures
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Failed**:
-   - Check PostgreSQL service: `sudo systemctl status postgresql`
-   - Verify credentials in `.env` file
-   - Ensure database and user exist
-
-2. **API Rate Limiting**:
-   - The Frankfurter API has rate limits
-   - Scheduler spacing helps avoid hitting limits
-   - Implement backoff strategies if needed
-
-3. **Missing Dependencies**:
-   - Ensure virtual environment is activated
-   - Install all requirements: `pip install -r requirements.txt`
-
-4. **Timezone Processing Errors**:
-   - Some countries have invalid timezone data
-   - The code handles these gracefully and continues processing
-
-### Performance Considerations
-
-- Countries data: ~250 countries processed in ~30 seconds
-- Currency rates: Depends on API response time, typically 2-5 minutes for all currencies
-- Database operations: Optimized with indexes and batch operations
-
-## Contributing
-
-1. Follow the existing code structure
-2. Add tests for new functionality
-3. Update documentation as needed
-4. Follow Python PEP 8 style guidelines
+This is a simple proof-of-concept version. A production-level implementation would include more advanced features, better error handling, monitoring, and additional technologies.
 
 ## License
 
