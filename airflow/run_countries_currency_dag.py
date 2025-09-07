@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Standalone runner for the Countries Currency DAG
-This simulates running the countries_currency_processing DAG without Airflow
-"""
-
 import asyncio
 import sys
 import os

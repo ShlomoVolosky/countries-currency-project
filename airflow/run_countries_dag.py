@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Standalone runner for the Currencies DAG
-This simulates running the currencies_processing DAG without Airflow
-"""
-
 import asyncio
 import sys
 import os
@@ -12,25 +6,25 @@ from datetime import datetime
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from src.processors.currencies import CurrencyProcessor
+from src.processors.countries import CountriesProcessor
 from src.database.connection import db_connection
 from src.utils.logger import get_logger
 
-logger = get_logger("currencies_dag_runner")
+logger = get_logger("countries_dag_runner")
 
 async def setup_database():
     """Initialize database connection"""
     await db_connection.create_pool()
     logger.info("Database connection established")
 
-async def process_currencies():
-    """Process currency rates"""
-    processor = CurrencyProcessor()
+async def process_countries():
+    """Process countries data"""
+    processor = CountriesProcessor()
     success = await processor.process()
     if success:
-        logger.info("Currency processing completed successfully")
+        logger.info("Countries processing completed successfully")
     else:
-        raise Exception("Currency processing failed")
+        raise Exception("Countries processing failed")
 
 async def cleanup_database():
     """Cleanup database connections"""
@@ -38,9 +32,9 @@ async def cleanup_database():
     logger.info("Database connections closed")
 
 async def main():
-    """Run the currencies DAG tasks in sequence"""
+    """Run the countries DAG tasks in sequence"""
     print("=" * 60)
-    print("💰 CURRENCIES DAG RUNNER")
+    print("🌍 COUNTRIES DAG RUNNER")
     print("=" * 60)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
@@ -52,10 +46,10 @@ async def main():
         print("✅ Database connection established")
         print()
         
-        # Task 2: Process Currencies
-        print("💰 Task 2: Processing currency rates...")
-        await process_currencies()
-        print("✅ Currency processing completed")
+        # Task 2: Process Countries
+        print("🌍 Task 2: Processing countries data...")
+        await process_countries()
+        print("✅ Countries processing completed")
         print()
         
         # Task 3: Cleanup Database
@@ -64,12 +58,12 @@ async def main():
         print("✅ Database connections closed")
         print()
         
-        print("🎉 Currencies DAG completed successfully!")
+        print("🎉 Countries DAG completed successfully!")
         print(f"Finished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
     except Exception as e:
-        logger.error(f"Currencies DAG failed: {e}")
-        print(f"❌ Currencies DAG failed: {e}")
+        logger.error(f"Countries DAG failed: {e}")
+        print(f"❌ Countries DAG failed: {e}")
         # Ensure cleanup even on failure
         try:
             await cleanup_database()
