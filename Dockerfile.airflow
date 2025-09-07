@@ -1,0 +1,27 @@
+FROM apache/airflow:2.7.0
+
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to airflow user
+USER airflow
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    pydantic-settings \
+    aiohttp \
+    asyncpg \
+    psycopg2-binary \
+    sqlalchemy \
+    httpx \
+    python-dotenv \
+    pytz \
+    prometheus-client
+
+# Set working directory
+WORKDIR /opt/airflow
