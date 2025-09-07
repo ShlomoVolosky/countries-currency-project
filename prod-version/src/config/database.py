@@ -15,7 +15,6 @@ class DatabaseConfig:
     def __init__(self):
         self.settings = get_settings()
         self.connection_pool: Optional[SimpleConnectionPool] = None
-        self._initialize_pool()
     
     def _initialize_pool(self):
         try:
@@ -37,6 +36,9 @@ class DatabaseConfig:
     def get_connection(self):
         connection = None
         try:
+            if not self.connection_pool:
+                self._initialize_pool()
+            
             if not self.connection_pool:
                 raise Exception("Database connection pool not initialized")
             
@@ -69,3 +71,4 @@ db_config = DatabaseConfig()
 
 
 def get_database_config() -> DatabaseConfig:
+    return db_config
