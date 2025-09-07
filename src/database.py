@@ -26,7 +26,7 @@ class Database:
         if self.connection:
             self.connection.close()
     
-    def execute_query(self, query, params=None):
+    def execute_query(self, query, params=None, fetch_results=True):
         if not self.connection:
             if not self.connect():
                 return None
@@ -35,7 +35,10 @@ class Database:
             with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(query, params)
                 self.connection.commit()
-                return cursor.fetchall()
+                if fetch_results:
+                    return cursor.fetchall()
+                else:
+                    return True
         except Exception as e:
             print(f"Error executing query: {e}")
             self.connection.rollback()
@@ -57,7 +60,7 @@ class Database:
             country_data['population'],
             json.dumps(country_data['current_time'])
         )
-        return self.execute_query(query, params)
+        return self.execute_query(query, params, fetch_results=False)
     
     def insert_currency_rate(self, country_name, currency_code, shekel_rate):
         query = """
@@ -67,7 +70,7 @@ class Database:
         DO UPDATE SET shekel_rate = EXCLUDED.shekel_rate
         """
         params = (country_name, currency_code, shekel_rate)
-        return self.execute_query(query, params)
+        return self.execute_query(query, params, fetch_results=False)
     
     def get_all_countries(self):
         query = "SELECT * FROM countries"

@@ -11,7 +11,7 @@ class Config:
     DB_PORT = os.getenv('DB_PORT', '5432')
     
     # API URLs
-    COUNTRIES_API_URL = "https://restcountries.com/v3.1/all"
+    COUNTRIES_API_URL = "https://restcountries.com/v3.1/all?fields=name,capital,continents,currencies,unMember,population,timezones"
     CURRENCY_API_URL = "https://api.frankfurter.app"
     
     @property
