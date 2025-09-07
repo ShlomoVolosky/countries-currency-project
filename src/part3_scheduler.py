@@ -67,13 +67,25 @@ class AutomatedScheduler:
     def run_initial_setup(self):
         """Run initial data load"""
         print("Running initial data setup...")
+        print("=" * 50)
+        
         print("Step 1: Loading countries data...")
+        print("-" * 30)
+        start_time = time.time()
         self.run_countries_update()
+        countries_time = time.time() - start_time
+        print(f"Countries data loaded in {countries_time:.1f} seconds")
         
         print("\nStep 2: Loading currency rates...")
+        print("-" * 30)
+        start_time = time.time()
         self.run_currency_update()
+        currency_time = time.time() - start_time
+        print(f"Currency rates loaded in {currency_time:.1f} seconds")
         
-        print("\nInitial setup completed!")
+        total_time = countries_time + currency_time
+        print(f"\nInitial setup completed in {total_time:.1f} seconds!")
+        print("=" * 50)
 
 def main():
     scheduler = AutomatedScheduler()

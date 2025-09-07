@@ -115,14 +115,17 @@ class CountriesProcessor:
             return False
         
         successful_inserts = 0
+        total_countries = len(countries_data)
         
-        for country in countries_data:
+        for i, country in enumerate(countries_data, 1):
+            print(f"[{i}/{total_countries}] Processing {country.get('name', {}).get('common', 'Unknown')}...")
+            
             formatted_data = self.format_country_data(country)
             if formatted_data and formatted_data['country_name']:
                 result = self.db.insert_country(formatted_data)
                 if result is not None:
                     successful_inserts += 1
-                    print(f"Inserted: {formatted_data['country_name']}")
+                    print(f"  Inserted: {formatted_data['country_name']}")
         
         self.db.disconnect()
         print(f"Successfully processed {successful_inserts} countries")
