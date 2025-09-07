@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""
+Main application entry point for the Countries Currency Project.
+
+This module provides the main entry point for running the application
+in different modes: countries processing, currency processing, or scheduler.
+"""
+
+import sys
+import argparse
+import logging
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent))
+
+from config.settings import get_settings
+from utils.logger import setup_logging
+from processors.country_processor import CountryProcessor
+from processors.currency_processor import CurrencyProcessor
+from scheduler.tasks import SchedulerManager
+
+
+def setup_application():
+    """Initialize application settings and logging."""
+    settings = get_settings()
+    setup_logging(settings.LOG_LEVEL)
+    return settings
+
+
+def run_countries_update():
+    """Run countries data update."""
+    logger = logging.getLogger(__name__)
+    logger.info("Starting countries data update...")
+    
+    try:
+        processor = CountryProcessor()
+        success = processor.process_and_save_countries()
+        
+        if success:
+            logger.info("Countries data update completed successfully")
+            return True
+        else:
+            logger.error("Countries data update failed")
+            return False
+    except Exception as e:
+        logger.error(f"Error in countries update: {e}", exc_info=True)
+        return False
+
+
+def run_currency_update():
+    """Run currency rates update."""
+    logger = logging.getLogger(__name__)
+    logger.info("Starting currency rates update...")
+    
+    try:
+        processor = CurrencyProcessor()
+        success = processor.process_currency_rates()
+        
+        if success:
+            logger.info("Currency rates update completed successfully")
+            return True
+        else:
+            logger.error("Currency rates update failed")
+            return False
+    except Exception as e:
+        logger.error(f"Error in currency update: {e}", exc_info=True)
+        return False
+
+
+def run_scheduler():
+    """Start the automated scheduler."""
+    logger = logging.getLogger(__name__)
+    logger.info("Starting automated scheduler...")
+    
+    try:
+        scheduler = SchedulerManager()
+        scheduler.start()
+    except KeyboardInterrupt:
+        logger.info("Scheduler stopped by user")
+    except Exception as e:
+        logger.error(f"Error in scheduler: {e}", exc_info=True)
+
+
+def run_initial_setup():
+    """Run initial data load."""
+    logger = logging.getLogger(__name__)
+    logger.info("Running initial data setup...")
+    
+    countries_success = run_countries_update()
+    currency_success = run_currency_update()
+    
+    if countries_success and currency_success:
+        logger.info("Initial setup completed successfully")
+        return True
+    else:
+        logger.error("Initial setup failed")
+        return False
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="Countries Currency Project - Data Processing Application"
+    )
+    parser.add_argument(
+        "command",
+        choices=["countries", "currency", "scheduler", "setup"],
+        help="Command to run"
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Set the logging level"
+    )
+    
+    args = parser.parse_args()
+    
+    # Setup application
+    settings = setup_application()
+    
+    # Override log level if specified
+    if args.log_level != settings.LOG_LEVEL:
+        setup_logging(args.log_level)
+    
+    # Execute command
+    if args.command == "countries":
+        success = run_countries_update()
+        sys.exit(0 if success else 1)
+    elif args.command == "currency":
+        success = run_currency_update()
+        sys.exit(0 if success else 1)
+    elif args.command == "scheduler":
+        run_scheduler()
+    elif args.command == "setup":
+        success = run_initial_setup()
+        sys.exit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    main()

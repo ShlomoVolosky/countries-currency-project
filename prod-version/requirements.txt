@@ -1,0 +1,35 @@
+# Core dependencies
+requests
+psycopg2-binary
+python-dotenv
+# Time and timezone handling
+pytz
+# Data processing
+pandas
+numpy
+# API and web frameworks (optional for future extensions)
+fastapi
+uvicorn
+# Monitoring and logging
+prometheus-client
+# Testing
+pytest
+pytest-mock
+# Development tools
+black
+flake8
+mypy
+# Database migrations (optional)
+alembic
+# Scheduling (if using APScheduler instead of Airflow)
+APScheduler
+# For Airflow (if you want to use it locally)
+apache-airflow
+apache-airflow-providers-postgres
+# Configuration management
+pydantic
+pydantic-settings
+# Retry mechanisms
+tenacity
+# Logging
+structlog
