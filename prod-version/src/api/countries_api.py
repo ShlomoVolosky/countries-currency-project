@@ -1,10 +1,3 @@
-"""
-REST Countries API client for the Countries Currency Project.
-
-This module provides functionality to interact with the REST Countries API
-for fetching country data.
-"""
-
 import logging
 from typing import Optional, List, Dict, Any
 
@@ -16,37 +9,15 @@ logger = get_logger(__name__)
 
 
 class CountriesAPIClient(BaseAPIClient):
-    """Client for REST Countries API."""
-    
-    def __init__(self):
-        settings = get_settings()
-        super().__init__(settings.api.countries_url)
-        self.logger = get_logger(__name__)
-    
-    def test_connection(self) -> bool:
-        """Test connection to REST Countries API."""
         try:
-            # Try to fetch a small sample of countries
             data = self.get_all_countries(limit=1)
             return data is not None and len(data) > 0
         except Exception as e:
             self.logger.error(f"Countries API connection test failed: {e}")
             return False
-    
     def get_all_countries(self, limit: Optional[int] = None) -> Optional[List[Dict[str, Any]]]:
-        """
-        Get all countries from the API.
-        
-        Args:
-            limit: Optional limit on number of countries to fetch
-            
-        Returns:
-            List of country data or None if error
-        """
         try:
             self.logger.info("Fetching all countries from REST Countries API")
-            
-            # The API endpoint already includes the fields we need
             data = self.get('/')
             
             if data and isinstance(data, list):
@@ -64,18 +35,8 @@ class CountriesAPIClient(BaseAPIClient):
             return None
     
     def get_country_by_name(self, name: str) -> Optional[Dict[str, Any]]:
-        """
-        Get country by name.
-        
-        Args:
-            name: Country name
-            
-        Returns:
-            Country data or None if not found
-        """
         try:
             self.logger.info(f"Fetching country by name: {name}")
-            
             data = self.get(f'/name/{name}')
             
             if data and isinstance(data, list) and len(data) > 0:
@@ -89,18 +50,8 @@ class CountriesAPIClient(BaseAPIClient):
             return None
     
     def get_countries_by_region(self, region: str) -> Optional[List[Dict[str, Any]]]:
-        """
-        Get countries by region.
-        
-        Args:
-            region: Region name (e.g., 'Asia', 'Europe')
-            
-        Returns:
-            List of country data or None if error
-        """
         try:
             self.logger.info(f"Fetching countries by region: {region}")
-            
             data = self.get(f'/region/{region}')
             
             if data and isinstance(data, list):
@@ -115,18 +66,8 @@ class CountriesAPIClient(BaseAPIClient):
             return None
     
     def get_countries_by_currency(self, currency: str) -> Optional[List[Dict[str, Any]]]:
-        """
-        Get countries that use a specific currency.
-        
-        Args:
-            currency: Currency code (e.g., 'USD', 'EUR')
-            
-        Returns:
-            List of country data or None if error
-        """
         try:
             self.logger.info(f"Fetching countries by currency: {currency}")
-            
             data = self.get(f'/currency/{currency}')
             
             if data and isinstance(data, list):
@@ -141,18 +82,8 @@ class CountriesAPIClient(BaseAPIClient):
             return None
     
     def search_countries(self, query: str) -> Optional[List[Dict[str, Any]]]:
-        """
-        Search countries by name.
-        
-        Args:
-            query: Search query
-            
-        Returns:
-            List of matching country data or None if error
-        """
         try:
             self.logger.info(f"Searching countries with query: {query}")
-            
             data = self.get(f'/name/{query}')
             
             if data and isinstance(data, list):
@@ -167,12 +98,6 @@ class CountriesAPIClient(BaseAPIClient):
             return None
     
     def get_supported_fields(self) -> List[str]:
-        """
-        Get list of supported fields for the API.
-        
-        Returns:
-            List of supported field names
-        """
         return [
             'name',
             'capital',
@@ -188,30 +113,17 @@ class CountriesAPIClient(BaseAPIClient):
             'area',
             'borders'
         ]
-    
     def validate_country_data(self, country: Dict[str, Any]) -> bool:
-        """
-        Validate country data structure.
-        
-        Args:
-            country: Country data dictionary
-            
-        Returns:
-            True if valid, False otherwise
-        """
         required_fields = ['name', 'capital', 'continents', 'currencies', 'unMember', 'population', 'timezones']
-        
         for field in required_fields:
             if field not in country:
                 self.logger.warning(f"Missing required field: {field}")
                 return False
         
-        # Validate name structure
         if not isinstance(country.get('name'), dict) or 'common' not in country['name']:
             self.logger.warning("Invalid name structure")
             return False
         
-        # Validate other field types
         if not isinstance(country.get('continents'), list):
             self.logger.warning("Continents should be a list")
             return False
@@ -235,12 +147,6 @@ class CountriesAPIClient(BaseAPIClient):
         return True
     
     def get_api_info(self) -> Dict[str, Any]:
-        """
-        Get information about the API.
-        
-        Returns:
-            Dictionary with API information
-        """
         return {
             'name': 'REST Countries API',
             'base_url': self.base_url,

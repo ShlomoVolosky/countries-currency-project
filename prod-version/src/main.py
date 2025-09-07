@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""
-Main application entry point for the Countries Currency Project.
-
-This module provides the main entry point for running the application
-in different modes: countries processing, currency processing, or scheduler.
-"""
 
 import sys
 import argparse
 import logging
 from pathlib import Path
 
-# Add src to path for imports
 sys.path.append(str(Path(__file__).parent))
 
 from config.settings import get_settings
@@ -22,14 +15,12 @@ from scheduler.tasks import SchedulerManager
 
 
 def setup_application():
-    """Initialize application settings and logging."""
     settings = get_settings()
     setup_logging(settings.LOG_LEVEL)
     return settings
 
 
 def run_countries_update():
-    """Run countries data update."""
     logger = logging.getLogger(__name__)
     logger.info("Starting countries data update...")
     
@@ -49,7 +40,6 @@ def run_countries_update():
 
 
 def run_currency_update():
-    """Run currency rates update."""
     logger = logging.getLogger(__name__)
     logger.info("Starting currency rates update...")
     
@@ -69,7 +59,6 @@ def run_currency_update():
 
 
 def run_scheduler():
-    """Start the automated scheduler."""
     logger = logging.getLogger(__name__)
     logger.info("Starting automated scheduler...")
     
@@ -83,7 +72,6 @@ def run_scheduler():
 
 
 def run_initial_setup():
-    """Run initial data load."""
     logger = logging.getLogger(__name__)
     logger.info("Running initial data setup...")
     
@@ -99,32 +87,16 @@ def run_initial_setup():
 
 
 def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Countries Currency Project - Data Processing Application"
-    )
-    parser.add_argument(
-        "command",
-        choices=["countries", "currency", "scheduler", "setup"],
-        help="Command to run"
-    )
-    parser.add_argument(
-        "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO",
-        help="Set the logging level"
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["countries", "currency", "scheduler", "setup"])
+    parser.add_argument("--log-level", choices=["DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
     
     args = parser.parse_args()
     
-    # Setup application
     settings = setup_application()
     
-    # Override log level if specified
     if args.log_level != settings.LOG_LEVEL:
         setup_logging(args.log_level)
-    
-    # Execute command
     if args.command == "countries":
         success = run_countries_update()
         sys.exit(0 if success else 1)

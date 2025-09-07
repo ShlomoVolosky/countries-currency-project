@@ -1,10 +1,3 @@
-"""
-Database configuration and connection management.
-
-This module provides database configuration and connection utilities
-for the Countries Currency Project.
-"""
-
 from typing import Optional, Dict, Any, List, Union
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -18,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseConfig:
-    """Database configuration and connection management."""
     
     def __init__(self):
         self.settings = get_settings()
@@ -26,7 +18,6 @@ class DatabaseConfig:
         self._initialize_pool()
     
     def _initialize_pool(self):
-        """Initialize connection pool."""
         try:
             self.connection_pool = SimpleConnectionPool(
                 minconn=1,
@@ -44,7 +35,6 @@ class DatabaseConfig:
     
     @contextmanager
     def get_connection(self):
-        """Get database connection from pool."""
         connection = None
         try:
             if not self.connection_pool:
@@ -61,23 +51,6 @@ class DatabaseConfig:
     
     @contextmanager
     def get_cursor(self, connection=None):
-        """Get database cursor."""
-        if connection:
-            cursor = connection.cursor(cursor_factory=RealDictCursor)
-            try:
-                yield cursor
-            finally:
-                cursor.close()
-        else:
-            with self.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
-                try:
-                    yield cursor
-                finally:
-                    cursor.close()
-    
-    def test_connection(self) -> bool:
-        """Test database connection."""
         try:
             with self.get_connection() as conn:
                 with conn.cursor() as cursor:
@@ -87,36 +60,12 @@ class DatabaseConfig:
         except Exception as e:
             logger.error(f"Database connection test failed: {e}")
             return False
-    
     def execute_query(self, query: str, params: Optional[tuple] = None, fetch_results: bool = True) -> Optional[Union[List[Dict], bool]]:
-        """Execute a database query with retry logic."""
-        try:
-            with self.get_connection() as conn:
-                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                    cursor.execute(query, params)
-                    conn.commit()
-                    
-                    if fetch_results:
-                        return cursor.fetchall()
-                    else:
-                        return True
-        except Exception as e:
-            logger.error(f"Error executing query: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            raise
-    
-    def close_pool(self):
-        """Close connection pool."""
         if self.connection_pool:
             self.connection_pool.closeall()
             logger.info("Database connection pool closed")
 
-
-# Global database config instance
 db_config = DatabaseConfig()
 
 
 def get_database_config() -> DatabaseConfig:
-    """Get database configuration instance."""
-    return db_config

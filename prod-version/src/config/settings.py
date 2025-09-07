@@ -1,10 +1,3 @@
-"""
-Configuration management for the Countries Currency Project.
-
-This module provides centralized configuration management using Pydantic
-for validation and type safety.
-"""
-
 import os
 from typing import Optional, List
 from functools import lru_cache
@@ -13,7 +6,6 @@ from pydantic_settings import BaseSettings
 
 
 class DatabaseSettings(BaseSettings):
-    """Database configuration settings."""
     
     host: str = Field(default="localhost", alias="DB_HOST")
     name: str = Field(default="countries_db", alias="DB_NAME")
@@ -23,14 +15,12 @@ class DatabaseSettings(BaseSettings):
     
     @property
     def url(self) -> str:
-        """Generate database URL."""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
     
     model_config = ConfigDict(env_prefix="DB_")
 
 
 class APISettings(BaseSettings):
-    """API configuration settings."""
     
     countries_url: str = Field(
         default="https://restcountries.com/v3.1/all?fields=name,capital,continents,currencies,unMember,population,timezones",
@@ -47,7 +37,6 @@ class APISettings(BaseSettings):
 
 
 class MonitoringSettings(BaseSettings):
-    """Monitoring configuration settings."""
     
     prometheus_port: int = Field(default=8000, alias="PROMETHEUS_PORT")
     grafana_port: int = Field(default=3000, alias="GRAFANA_PORT")
@@ -57,7 +46,6 @@ class MonitoringSettings(BaseSettings):
 
 
 class LoggingSettings(BaseSettings):
-    """Logging configuration settings."""
     
     level: str = Field(default="INFO", alias="LOG_LEVEL")
     format: str = Field(
@@ -65,13 +53,12 @@ class LoggingSettings(BaseSettings):
         alias="LOG_FORMAT"
     )
     file_path: Optional[str] = Field(default=None, alias="LOG_FILE_PATH")
-    max_file_size: int = Field(default=10485760, alias="LOG_MAX_FILE_SIZE")  # 10MB
+    max_file_size: int = Field(default=10485760, alias="LOG_MAX_FILE_SIZE")
     backup_count: int = Field(default=5, alias="LOG_BACKUP_COUNT")
     
     @field_validator("level")
     @classmethod
     def validate_log_level(cls, v):
-        """Validate log level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
             raise ValueError(f"Log level must be one of {valid_levels}")
@@ -81,14 +68,13 @@ class LoggingSettings(BaseSettings):
 
 
 class SchedulerSettings(BaseSettings):
-    """Scheduler configuration settings."""
     
     countries_update_cron: str = Field(
-        default="0 2 * * 0",  # Every Sunday at 2 AM
+        default="0 2 * * 0",
         alias="COUNTRIES_UPDATE_CRON"
     )
     currency_update_cron: str = Field(
-        default="0 */6 * * *",  # Every 6 hours
+        default="0 */6 * * *",
         alias="CURRENCY_UPDATE_CRON"
     )
     timezone: str = Field(default="UTC", alias="SCHEDULER_TIMEZONE")
@@ -97,12 +83,10 @@ class SchedulerSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    """Main application settings."""
     
     environment: str = Field(default="development", alias="ENVIRONMENT")
     debug: bool = Field(default=False, alias="DEBUG")
     
-    # Sub-configurations
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     api: APISettings = Field(default_factory=APISettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
@@ -112,7 +96,6 @@ class Settings(BaseSettings):
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v):
-        """Validate environment setting."""
         valid_envs = ["development", "staging", "production"]
         if v.lower() not in valid_envs:
             raise ValueError(f"Environment must be one of {valid_envs}")
@@ -120,12 +103,10 @@ class Settings(BaseSettings):
     
     @property
     def is_production(self) -> bool:
-        """Check if running in production environment."""
         return self.environment == "production"
     
     @property
     def is_development(self) -> bool:
-        """Check if running in development environment."""
         return self.environment == "development"
     
     model_config = ConfigDict(
@@ -138,13 +119,10 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    """Get application settings (cached)."""
     return Settings()
 
 
-# Backward compatibility
 class Config:
-    """Backward compatibility wrapper for old config class."""
     
     def __init__(self):
         self.settings = get_settings()
