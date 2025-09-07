@@ -44,7 +44,7 @@ class Database:
     def insert_country(self, country_data):
         query = """
         INSERT INTO countries (country_name, capitals, continent, currencies, 
-                             is_un_member, population, current_time)
+                             is_un_member, population, timezone_info)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT DO NOTHING
         """
