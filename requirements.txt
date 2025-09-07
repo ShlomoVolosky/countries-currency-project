@@ -4,3 +4,4 @@ schedule
 pytest
 python-dotenv
 pytz
+requests_mock
