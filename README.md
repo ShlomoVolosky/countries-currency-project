@@ -9,7 +9,81 @@ This project fetches country data and their currencies, then gets the current ex
 - 1 EUR = 3.90 ILS  
 - 1 GBP = 4.50 ILS
 
-## Project Structure
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph "External APIs"
+        RCA[REST Countries API<br/>restcountries.com]
+        FA[Frankfurter API<br/>api.frankfurter.app]
+    end
+    
+    subgraph "Python Application"
+        subgraph "Core Components"
+            P1[part1_countries.py<br/>Fetch Countries Data]
+            P2[part2_currencies.py<br/>Get Exchange Rates]
+            P3[part3_scheduler.py<br/>Automated Scheduler]
+        end
+        
+        subgraph "Supporting Modules"
+            CONFIG[config.py<br/>Configuration]
+            DB[database.py<br/>Database Operations]
+        end
+    end
+    
+    subgraph "Data Storage"
+        PG[(PostgreSQL<br/>countries_db)]
+    end
+    
+    subgraph "Testing"
+        TESTS[Test Suite<br/>pytest]
+    end
+    
+    subgraph "User Interaction"
+        USER[Developer/User]
+    end
+    
+    %% Data Flow
+    RCA --> P1
+    FA --> P2
+    P1 --> DB
+    P2 --> DB
+    DB --> PG
+    P3 --> P1
+    P3 --> P2
+    
+    %% User Flow
+    USER --> P1
+    USER --> P2
+    USER --> P3
+    
+    %% Testing
+    TESTS --> P1
+    TESTS --> P2
+    TESTS --> P3
+    TESTS --> DB
+    
+    %% Configuration
+    CONFIG --> P1
+    CONFIG --> P2
+    CONFIG --> P3
+    CONFIG --> DB
+    
+    %% Styling
+    classDef api fill:#e1f5fe
+    classDef python fill:#fff3e0
+    classDef database fill:#f3e5f5
+    classDef testing fill:#e8f5e8
+    classDef user fill:#fce4ec
+    
+    class RCA,FA api
+    class P1,P2,P3,CONFIG,DB python
+    class PG database
+    class TESTS testing
+    class USER user
+```
+
+## 📁 Project Structure
 
 ```
 countries-currency-project/
@@ -27,7 +101,7 @@ countries-currency-project/
 ├── sql/
 │   └── create_tables.sql  # Database schema (countries & currency_rates tables)
 ├── requirements.txt       # Python dependencies
-└── countries-currency.md  # This file
+└── README.md              # This file
 ```
 
 ## Quick Start
