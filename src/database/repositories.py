@@ -22,10 +22,13 @@ class CountryRepository(BaseRepository):
         
         try:
             now = datetime.now()
+            # Ensure timezone_info is properly serialized as JSON string
+            import json
+            timezone_info_json = json.dumps(entity.timezone_info) if entity.timezone_info is not None else '{}'
             row = await db_connection.fetch_one(
                 query, entity.country_name, entity.capitals, entity.continent,
                 entity.currencies, entity.is_un_member, entity.population,
-                entity.timezone_info, now, now
+                timezone_info_json, now, now
             )
             return Country(**row) if row else None
         except Exception as e:
@@ -41,7 +44,21 @@ class CountryRepository(BaseRepository):
         
         try:
             row = await db_connection.fetch_one(query, entity_id)
-            return Country(**row) if row else None
+            if row:
+                # Ensure timezone_info is properly deserialized from JSON
+                import json
+                if 'timezone_info' in row:
+                    if isinstance(row['timezone_info'], str):
+                        try:
+                            row['timezone_info'] = json.loads(row['timezone_info'])
+                        except (json.JSONDecodeError, TypeError):
+                            row['timezone_info'] = {}
+                    elif row['timezone_info'] is None:
+                        row['timezone_info'] = {}
+                else:
+                    row['timezone_info'] = {}
+                return Country(**row)
+            return None
         except Exception as e:
             logger.error(f"Failed to get country by id: {e}")
             return None
@@ -55,7 +72,21 @@ class CountryRepository(BaseRepository):
         
         try:
             row = await db_connection.fetch_one(query, country_name)
-            return Country(**row) if row else None
+            if row:
+                # Ensure timezone_info is properly deserialized from JSON
+                import json
+                if 'timezone_info' in row:
+                    if isinstance(row['timezone_info'], str):
+                        try:
+                            row['timezone_info'] = json.loads(row['timezone_info'])
+                        except (json.JSONDecodeError, TypeError):
+                            row['timezone_info'] = {}
+                    elif row['timezone_info'] is None:
+                        row['timezone_info'] = {}
+                else:
+                    row['timezone_info'] = {}
+                return Country(**row)
+            return None
         except Exception as e:
             logger.error(f"Failed to get country by name: {e}")
             return None

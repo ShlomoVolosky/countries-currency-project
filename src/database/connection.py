@@ -22,13 +22,23 @@ class DatabaseConnection:
                 self.settings.database.url,
                 min_size=1,
                 max_size=10,
-                command_timeout=60
+                command_timeout=60,
+                init=self._init_connection
             )
             logger.info("Database connection pool created successfully")
             return True
         except Exception as e:
             logger.error(f"Failed to create database pool: {e}")
             return False
+    
+    async def _init_connection(self, conn):
+        """Initialize connection with proper JSONB handling"""
+        await conn.set_type_codec(
+            'jsonb',
+            encoder=lambda x: x,
+            decoder=lambda x: x,
+            schema='pg_catalog'
+        )
     
     async def close_pool(self):
         if self.pool:

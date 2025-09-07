@@ -53,6 +53,7 @@ class CountriesProcessor(BaseDataProcessor):
         
         for timezone_str in timezones:
             try:
+                # Clean up timezone string
                 if timezone_str.startswith('UTC'):
                     if timezone_str == 'UTC':
                         timezone_str = 'UTC'
@@ -76,7 +77,8 @@ class CountriesProcessor(BaseDataProcessor):
                 self.logger.warning(f"Error processing timezone {timezone_str}: {e}")
                 continue
         
-        return current_times
+        # Ensure we always return a proper dictionary, not empty
+        return current_times if current_times else {}
     
     def _format_country_data(self, country: Dict[str, Any]) -> Optional[CountryCreate]:
         try:
@@ -125,10 +127,12 @@ class CountriesProcessor(BaseDataProcessor):
     async def save_data(self, transformed_data: List[CountryCreate]) -> bool:
         try:
             success_count = 0
+            skipped_count = 0
             
             for country_data in transformed_data:
                 existing = await self.repository.get_by_name(country_data.country_name)
                 if existing:
+                    skipped_count += 1
                     self.logger.debug(f"Country {country_data.country_name} already exists, skipping")
                     continue
                 
@@ -139,8 +143,9 @@ class CountriesProcessor(BaseDataProcessor):
                 else:
                     self.logger.warning(f"Failed to create country: {country_data.country_name}")
             
-            self.logger.info(f"Successfully processed {success_count} countries")
-            return success_count > 0
+            self.logger.info(f"Successfully processed {success_count} countries, skipped {skipped_count} existing countries")
+            # Return True if we processed any countries OR if all countries already existed (skipped_count > 0)
+            return success_count > 0 or skipped_count > 0
             
         except Exception as e:
             self.logger.error(f"Failed to save countries data: {e}")

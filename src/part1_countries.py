@@ -1,4 +1,10 @@
 import asyncio
+import sys
+import os
+
+# Add the project root to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.scheduler.runner import SchedulerRunner
 from src.database.connection import db_connection
 from src.utils.logger import get_logger
