@@ -33,22 +33,55 @@ async def get_countries(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve countries: {str(e)}")
 
 
-@router.get("/{country_id}", response_model=APIResponse)
-async def get_country(country_id: int):
+@router.post("/process", response_model=APIResponse)
+async def process_countries():
+    """Trigger countries data processing"""
     try:
-        country = await repository.get_by_id(country_id)
-        if not country:
-            raise HTTPException(status_code=404, detail="Country not found")
+        from src.processors.countries import CountriesProcessor
+        processor = CountriesProcessor()
+        success = await processor.process()
         
-        return APIResponse(
-            success=True,
-            message="Country retrieved successfully",
-            data=country.model_dump()
-        )
-    except HTTPException:
-        raise
+        if success:
+            return APIResponse(
+                success=True,
+                message="Countries data processing completed successfully",
+                data={"processed": True}
+            )
+        else:
+            raise HTTPException(status_code=500, detail="Countries data processing failed")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve country: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process countries: {str(e)}")
+
+
+@router.post("/process-all", response_model=APIResponse)
+async def process_countries_and_currencies():
+    """Trigger combined countries and currencies data processing"""
+    try:
+        import asyncio
+        from src.processors.countries import CountriesProcessor
+        from src.processors.currencies import CurrencyProcessor
+        
+        # Process countries first
+        countries_processor = CountriesProcessor()
+        countries_success = await countries_processor.process()
+        
+        # Then process currencies
+        currencies_processor = CurrencyProcessor()
+        currencies_success = await currencies_processor.process()
+        
+        if countries_success and currencies_success:
+            return APIResponse(
+                success=True,
+                message="Countries and currencies data processing completed successfully",
+                data={"countries_processed": True, "currencies_processed": True}
+            )
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Processing failed - Countries: {countries_success}, Currencies: {currencies_success}"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process countries and currencies: {str(e)}")
 
 
 @router.get("/search/{country_name}", response_model=APIResponse)
@@ -67,3 +100,22 @@ async def search_country(country_name: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to search country: {str(e)}")
+
+
+@router.get("/{country_id}", response_model=APIResponse)
+async def get_country(country_id: int):
+    try:
+        country = await repository.get_by_id(country_id)
+        if not country:
+            raise HTTPException(status_code=404, detail="Country not found")
+        
+        return APIResponse(
+            success=True,
+            message="Country retrieved successfully",
+            data=country.model_dump()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve country: {str(e)}")
+

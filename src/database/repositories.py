@@ -141,7 +141,22 @@ class CountryRepository(BaseRepository):
         
         try:
             rows = await db_connection.execute_query(query, limit, offset)
-            return [Country(**row) for row in rows]
+            countries = []
+            for row in rows:
+                # Ensure timezone_info is properly deserialized from JSON
+                import json
+                if 'timezone_info' in row:
+                    if isinstance(row['timezone_info'], str):
+                        try:
+                            row['timezone_info'] = json.loads(row['timezone_info'])
+                        except (json.JSONDecodeError, TypeError):
+                            row['timezone_info'] = {}
+                    elif row['timezone_info'] is None:
+                        row['timezone_info'] = {}
+                else:
+                    row['timezone_info'] = {}
+                countries.append(Country(**row))
+            return countries
         except Exception as e:
             logger.error(f"Failed to list countries: {e}")
             return []

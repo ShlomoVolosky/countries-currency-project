@@ -48,22 +48,24 @@ async def get_latest_rates():
         raise HTTPException(status_code=500, detail=f"Failed to retrieve latest rates: {str(e)}")
 
 
-@router.get("/{rate_id}", response_model=APIResponse)
-async def get_currency_rate(rate_id: int):
+@router.post("/process", response_model=APIResponse)
+async def process_currencies():
+    """Trigger currencies data processing"""
     try:
-        rate = await repository.get_by_id(rate_id)
-        if not rate:
-            raise HTTPException(status_code=404, detail="Currency rate not found")
+        from src.processors.currencies import CurrencyProcessor
+        processor = CurrencyProcessor()
+        success = await processor.process()
         
-        return APIResponse(
-            success=True,
-            message="Currency rate retrieved successfully",
-            data=rate.model_dump()
-        )
-    except HTTPException:
-        raise
+        if success:
+            return APIResponse(
+                success=True,
+                message="Currencies data processing completed successfully",
+                data={"processed": True}
+            )
+        else:
+            raise HTTPException(status_code=500, detail="Currencies data processing failed")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve currency rate: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process currencies: {str(e)}")
 
 
 @router.get("/convert/{currency_code}", response_model=APIResponse)
@@ -92,3 +94,22 @@ async def convert_to_ils(currency_code: str, amount: float = Query(default=1.0, 
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to convert currency: {str(e)}")
+
+
+@router.get("/{rate_id}", response_model=APIResponse)
+async def get_currency_rate(rate_id: int):
+    try:
+        rate = await repository.get_by_id(rate_id)
+        if not rate:
+            raise HTTPException(status_code=404, detail="Currency rate not found")
+        
+        return APIResponse(
+            success=True,
+            message="Currency rate retrieved successfully",
+            data=rate.model_dump()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve currency rate: {str(e)}")
+
