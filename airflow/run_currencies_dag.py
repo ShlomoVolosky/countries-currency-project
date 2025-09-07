@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 # Add the project root to the Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.processors.currencies import CurrencyProcessor
 from src.database.connection import db_connection
