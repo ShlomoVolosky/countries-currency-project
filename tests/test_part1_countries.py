@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from part1_countries import CountriesProcessor
+import requests_mock
 
 class TestPart1Countries:
     
@@ -13,8 +14,7 @@ class TestPart1Countries:
         assert processor.config is not None
         assert processor.db is not None
     
-    @requests_mock.Mocker()
-    def test_fetch_countries_data_success(self, m):
+    def test_fetch_countries_data_success(self, requests_mock):
         """Test successful API call to countries endpoint"""
         # Mock API response
         mock_data = [
@@ -30,18 +30,17 @@ class TestPart1Countries:
         ]
         
         processor = CountriesProcessor()
-        m.get(processor.config.COUNTRIES_API_URL, json=mock_data)
+        requests_mock.get(processor.config.COUNTRIES_API_URL, json=mock_data)
         
         result = processor.fetch_countries_data()
         assert result is not None
         assert len(result) == 1
         assert result[0]["name"]["common"] == "Israel"
     
-    @requests_mock.Mocker()
-    def test_fetch_countries_data_failure(self, m):
+    def test_fetch_countries_data_failure(self, requests_mock):
         """Test API call failure"""
         processor = CountriesProcessor()
-        m.get(processor.config.COUNTRIES_API_URL, status_code=404)
+        requests_mock.get(processor.config.COUNTRIES_API_URL, status_code=404)
         
         result = processor.fetch_countries_data()
         assert result is None

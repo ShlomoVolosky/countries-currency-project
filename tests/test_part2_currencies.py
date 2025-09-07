@@ -14,8 +14,7 @@ class TestPart2Currencies:
         assert processor.config is not None
         assert processor.db is not None
     
-    @requests_mock.Mocker()
-    def test_get_shekel_rate_success(self, m):
+    def test_get_shekel_rate_success(self, requests_mock):
         """Test successful currency rate fetching"""
         processor = CurrencyProcessor()
         
@@ -29,7 +28,7 @@ class TestPart2Currencies:
             }
         }
         
-        m.get(f"{processor.config.CURRENCY_API_URL}/latest", json=mock_response)
+        requests_mock.get(f"{processor.config.CURRENCY_API_URL}/latest", json=mock_response)
         
         rate = processor.get_shekel_rate("USD")
         assert rate is not None
@@ -42,28 +41,26 @@ class TestPart2Currencies:
         rate = processor.get_shekel_rate("ILS")
         assert rate == 1.0
     
-    @requests_mock.Mocker()
-    def test_get_shekel_rate_failure(self, m):
+    def test_get_shekel_rate_failure(self, requests_mock):
         """Test currency rate fetching failure"""
         processor = CurrencyProcessor()
         
         # Mock API failure
-        m.get(f"{processor.config.CURRENCY_API_URL}/latest", status_code=404)
+        requests_mock.get(f"{processor.config.CURRENCY_API_URL}/latest", status_code=404)
         
         rate = processor.get_shekel_rate("USD")
         assert rate is None
     
-    @requests_mock.Mocker()
-    def test_get_shekel_rate_reverse_lookup(self, m):
+    def test_get_shekel_rate_reverse_lookup(self, requests_mock):
         """Test reverse currency lookup when direct lookup fails"""
         processor = CurrencyProcessor()
         
         # Mock first request failure (no rate returned)
-        m.get(f"{processor.config.CURRENCY_API_URL}/latest", 
+        requests_mock.get(f"{processor.config.CURRENCY_API_URL}/latest", 
               json={"amount": 1.0, "base": "ILS", "date": "2024-01-01", "rates": {}})
         
         # Mock second request success (reverse lookup)
-        m.get(f"{processor.config.CURRENCY_API_URL}/latest", 
+        requests_mock.get(f"{processor.config.CURRENCY_API_URL}/latest", 
               json={"amount": 1.0, "base": "USD", "date": "2024-01-01", "rates": {"ILS": 3.5}})
         
         rate = processor.get_shekel_rate("USD")
