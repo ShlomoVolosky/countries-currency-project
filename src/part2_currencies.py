@@ -6,11 +6,39 @@ class CurrencyProcessor:
     def __init__(self):
         self.config = Config()
         self.db = Database()
+        self.supported_currencies = None
     
+    def get_supported_currencies(self):
+        """Get list of currencies supported by Frankfurter API"""
+        if self.supported_currencies is not None:
+            return self.supported_currencies
+        
+        try:
+            response = requests.get(f"{self.config.CURRENCY_API_URL}/currencies")
+            response.raise_for_status()
+            data = response.json()
+            self.supported_currencies = set(data.keys())
+            return self.supported_currencies
+        except Exception as e:
+            print(f"Error fetching supported currencies: {e}")
+            # Fallback to known supported currencies
+            self.supported_currencies = {
+                'AUD', 'BGN', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP',
+                'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KRW', 'MXN', 'MYR',
+                'NOK', 'NZD', 'PHP', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'USD',
+                'ZAR'
+            }
+            return self.supported_currencies
+
     def get_shekel_rate(self, currency_code):
         """Get ILS rate for a specific currency using Frankfurter API"""
         if currency_code == 'ILS':
             return 1.0
+        
+        # Check if currency is supported by Frankfurter API
+        supported_currencies = self.get_supported_currencies()
+        if currency_code not in supported_currencies:
+            return None
         
         try:
             # Frankfurter API endpoint for latest rates
@@ -77,8 +105,13 @@ class CurrencyProcessor:
             print("Failed to connect to database")
             return False
         
+        # Get supported currencies once
+        supported_currencies = self.get_supported_currencies()
+        print(f"Frankfurter API supports {len(supported_currencies)} currencies: {sorted(supported_currencies)}")
+        
         successful_updates = 0
         total_currencies = 0
+        unsupported_currencies = 0
         
         for country in countries:
             country_name = country['country_name']
@@ -88,10 +121,23 @@ class CurrencyProcessor:
                 print(f"No currencies for {country_name}")
                 continue
             
-            print(f"Processing {country_name} with currencies: {currencies}")
+            # Separate supported and unsupported currencies
+            supported_country_currencies = [c for c in currencies if c in supported_currencies]
+            unsupported_country_currencies = [c for c in currencies if c not in supported_currencies]
+            
+            if unsupported_country_currencies:
+                print(f"Processing {country_name} with currencies: {currencies}")
+                print(f"  Supported: {supported_country_currencies}")
+                print(f"  Unsupported: {unsupported_country_currencies}")
+            else:
+                print(f"Processing {country_name} with currencies: {currencies}")
             
             for currency_code in currencies:
                 total_currencies += 1
+                
+                if currency_code not in supported_currencies:
+                    unsupported_currencies += 1
+                    continue
                 
                 # Get the shekel rate for this currency
                 shekel_rate = self.get_shekel_rate(currency_code)
@@ -104,12 +150,14 @@ class CurrencyProcessor:
                     )
                     if result is not None:
                         successful_updates += 1
-                        print(f"Updated rate for {country_name} - {currency_code}: {shekel_rate}")
-                else:
-                    print(f"Could not get rate for {country_name} - {currency_code}")
+                        print(f"  Updated rate for {country_name} - {currency_code}: {shekel_rate}")
         
         self.db.disconnect()
-        print(f"Successfully updated {successful_updates} out of {total_currencies} currency rates")
+        print(f"\nSummary:")
+        print(f"  Total currencies found: {total_currencies}")
+        print(f"  Supported by API: {total_currencies - unsupported_currencies}")
+        print(f"  Unsupported by API: {unsupported_currencies}")
+        print(f"  Successfully updated: {successful_updates}")
         return True
 
 def main():
