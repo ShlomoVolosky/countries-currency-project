@@ -18,6 +18,22 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-airflow:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    volumes:
+      - postgres_airflow_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build: .
     environment:
@@ -62,9 +78,11 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
     depends_on:
       - prometheus
 
@@ -75,7 +93,7 @@ services:
       - "8080:8080"
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
       - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
@@ -84,7 +102,7 @@ services:
       - ./src:/opt/airflow/dags/src
       - airflow_logs:/opt/airflow/logs
     depends_on:
-      - postgres
+      - postgres-airflow-airflow
       - app
     user: "50000:0"
 
@@ -93,7 +111,7 @@ services:
     command: scheduler
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
       - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     volumes:
@@ -101,7 +119,7 @@ services:
       - ./src:/opt/airflow/dags/src
       - airflow_logs:/opt/airflow/logs
     depends_on:
-      - postgres
+      - postgres-airflow-airflow
       - app
     user: "50000:0"
 
@@ -114,16 +132,17 @@ services:
       "
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     volumes:
       - airflow_logs:/opt/airflow/logs
     depends_on:
-      - postgres
+      - postgres-airflow
     user: "50000:0"
 
 volumes:
   postgres_data:
+  postgres_airflow_data:
   prometheus_data:
   grafana_data:
   airflow_logs:

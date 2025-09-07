@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
 from src.api.routes import countries, currencies, health
 from src.database.connection import db_connection
 from src.config.settings import get_settings
@@ -42,3 +44,9 @@ app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
 @app.get("/")
 async def root():
     return {"message": "Countries Currency Service API", "version": settings.app_version}
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint"""
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
