@@ -599,26 +599,6 @@ sudo docker-compose exec postgres psql -U countries_user -d countries_db -c "SEL
 }
 ```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
 ## 📄 License
 
 This project is for educational and demonstration purposes.
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review service logs
-3. Check monitoring dashboards
-4. Create an issue with detailed information
-
----
-
-**🎉 Congratulations!** You now have a production-grade microservice with comprehensive monitoring, automated processing, and full observability. The system is ready for production workloads with proper monitoring and alerting in place.
