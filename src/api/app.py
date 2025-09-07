@@ -7,6 +7,7 @@ from src.api.routes import countries, currencies, health
 from src.database.connection import db_connection
 from src.config.settings import get_settings
 from src.utils.logger import get_logger
+from src.monitoring.middleware import PrometheusMiddleware
 
 logger = get_logger("api")
 settings = get_settings()
@@ -35,6 +36,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Prometheus monitoring middleware
+app.add_middleware(PrometheusMiddleware)
 
 app.include_router(countries.router, prefix="/api/v1/countries", tags=["countries"])
 app.include_router(currencies.router, prefix="/api/v1/currencies", tags=["currencies"])

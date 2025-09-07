@@ -4,6 +4,7 @@ from datetime import date
 from src.database.repositories import CurrencyRateRepository
 from src.models.currency import CurrencyRate
 from src.models.api import CurrencyRatesResponse, APIResponse
+from src.monitoring.metrics import track_currency_rates_processed, track_api_call
 
 router = APIRouter()
 repository = CurrencyRateRepository()
@@ -57,14 +58,20 @@ async def process_currencies():
         success = await processor.process()
         
         if success:
+            track_currency_rates_processed("success")
+            track_api_call("currency_processor", "success")
             return APIResponse(
                 success=True,
                 message="Currencies data processing completed successfully",
                 data={"processed": True}
             )
         else:
+            track_currency_rates_processed("failed")
+            track_api_call("currency_processor", "failed")
             raise HTTPException(status_code=500, detail="Currencies data processing failed")
     except Exception as e:
+        track_currency_rates_processed("error")
+        track_api_call("currency_processor", "error")
         raise HTTPException(status_code=500, detail=f"Failed to process currencies: {str(e)}")
 
 

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from src.database.repositories import CountryRepository
 from src.models.country import Country
 from src.models.api import CountriesListResponse, APIResponse
+from src.monitoring.metrics import track_countries_processed, track_api_call
 
 router = APIRouter()
 repository = CountryRepository()
@@ -42,14 +43,20 @@ async def process_countries():
         success = await processor.process()
         
         if success:
+            track_countries_processed("success")
+            track_api_call("countries_processor", "success")
             return APIResponse(
                 success=True,
                 message="Countries data processing completed successfully",
                 data={"processed": True}
             )
         else:
+            track_countries_processed("failed")
+            track_api_call("countries_processor", "failed")
             raise HTTPException(status_code=500, detail="Countries data processing failed")
     except Exception as e:
+        track_countries_processed("error")
+        track_api_call("countries_processor", "error")
         raise HTTPException(status_code=500, detail=f"Failed to process countries: {str(e)}")
 
 
