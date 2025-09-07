@@ -1,114 +1,46 @@
-import schedule
-import time
-from datetime import datetime
-from part1_countries import CountriesProcessor
-from part2_currencies import CurrencyProcessor
+import asyncio
+from src.scheduler.runner import SchedulerRunner
+from src.database.connection import db_connection
+from src.utils.logger import get_logger
 
-class AutomatedScheduler:
-    def __init__(self):
-        self.countries_processor = CountriesProcessor()
-        self.currency_processor = CurrencyProcessor()
-    
-    def run_countries_update(self):
-        """Run countries data update with logging"""
-        print(f"[{datetime.now()}] Starting countries data update...")
-        try:
-            success = self.countries_processor.process_and_save_countries()
-            if success:
-                print(f"[{datetime.now()}] Countries data update completed successfully")
-            else:
-                print(f"[{datetime.now()}] Countries data update failed")
-        except Exception as e:
-            print(f"[{datetime.now()}] Error in countries update: {e}")
-    
-    def run_currency_update(self):
-        """Run currency rates update with logging"""
-        print(f"[{datetime.now()}] Starting currency rates update...")
-        try:
-            success = self.currency_processor.process_currency_rates()
-            if success:
-                print(f"[{datetime.now()}] Currency rates update completed successfully")
-            else:
-                print(f"[{datetime.now()}] Currency rates update failed")
-        except Exception as e:
-            print(f"[{datetime.now()}] Error in currency update: {e}")
-    
-    def setup_schedule(self):
-        """Setup automated schedule for data updates"""
-        
-        # Countries data update - once a week on Sunday at 02:00
-        # (Countries data doesn't change frequently)
-        schedule.every().sunday.at("02:00").do(self.run_countries_update)
-        
-        # Currency rates update - every 6 hours
-        # (Exchange rates change frequently during trading hours)
-        schedule.every(6).hours.do(self.run_currency_update)
-        
-        # Alternative scheduling options:
-        # Daily currency update at 06:00 (before market opens)
-        # schedule.every().day.at("06:00").do(self.run_currency_update)
-        
-        print("Scheduler configured:")
-        print("- Countries data: Weekly on Sunday at 02:00")
-        print("- Currency rates: Every 6 hours")
-        print("Scheduler started. Press Ctrl+C to stop.")
-    
-    def run_scheduler(self):
-        """Start the scheduler"""
-        self.setup_schedule()
-        
-        try:
-            while True:
-                schedule.run_pending()
-                time.sleep(60)  # Check every minute
-        except KeyboardInterrupt:
-            print("\nScheduler stopped by user")
-    
-    def run_initial_setup(self):
-        """Run initial data load"""
-        print("Running initial data setup...")
-        print("=" * 50)
-        
-        print("Step 1: Loading countries data...")
-        print("-" * 30)
-        start_time = time.time()
-        self.run_countries_update()
-        countries_time = time.time() - start_time
-        print(f"Countries data loaded in {countries_time:.1f} seconds")
-        
-        print("\nStep 2: Loading currency rates...")
-        print("-" * 30)
-        start_time = time.time()
-        self.run_currency_update()
-        currency_time = time.time() - start_time
-        print(f"Currency rates loaded in {currency_time:.1f} seconds")
-        
-        total_time = countries_time + currency_time
-        print(f"\nInitial setup completed in {total_time:.1f} seconds!")
-        print("=" * 50)
+logger = get_logger("part3_scheduler")
 
-def main():
-    scheduler = AutomatedScheduler()
+
+async def main():
+    runner = SchedulerRunner()
     
-    print("Automated Data Update Scheduler")
-    print("=" * 40)
+    print("Countries Currency Service - Legacy Scheduler")
+    print("=" * 50)
+    print("Note: For production use, please use Airflow DAGs instead")
     print("1. Run initial setup (load all data now)")
-    print("2. Start scheduler (automated updates)")
-    print("3. Run countries update only")
-    print("4. Run currency update only")
+    print("2. Run countries update only")
+    print("3. Run currency update only")
     
-    choice = input("Select option (1-4): ").strip()
+    choice = input("Select option (1-3): ").strip()
     
     if choice == "1":
-        scheduler.run_initial_setup()
+        success = await runner.run_initial_setup()
+        if success:
+            print("Initial setup completed successfully!")
+        else:
+            print("Initial setup failed!")
+            exit(1)
     elif choice == "2":
-        scheduler.run_scheduler()
+        await db_connection.create_pool()
+        success = await runner.run_countries_update()
+        await db_connection.close_pool()
+        if not success:
+            exit(1)
     elif choice == "3":
-        scheduler.run_countries_update()
-    elif choice == "4":
-        scheduler.run_currency_update()
+        await db_connection.create_pool()
+        success = await runner.run_currency_update()
+        await db_connection.close_pool()
+        if not success:
+            exit(1)
     else:
         print("Invalid choice")
+        exit(1)
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

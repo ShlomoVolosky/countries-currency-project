@@ -1,7 +1,31 @@
+# Core dependencies
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+# Database
+asyncpg
 psycopg2-binary
-requests
-schedule
-pytest
+sqlalchemy
+# HTTP client
+aiohttp
+httpx
+# Utilities
 python-dotenv
 pytz
-requests_mock
+python-multipart
+# Monitoring
+prometheus-client
+# Testing
+pytest
+pytest-asyncio
+pytest-mock
+requests-mock
+httpx
+# Development
+black
+isort
+flake8
+mypy
+# Airflow (for local development)
+apache-airflow

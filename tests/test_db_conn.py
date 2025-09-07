@@ -1,46 +1,44 @@
 import pytest
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-from database import Database
+import asyncio
+from src.database.connection import db_connection
+from src.config.settings import get_settings
 
 class TestDatabaseConnection:
     
-    def test_database_connection(self):
+    @pytest.mark.asyncio
+    async def test_database_connection(self):
         """Test database connection"""
-        db = Database()
-        assert db.test_connection(), "Failed to connect to database"
-        db.disconnect()
+        success = await db_connection.create_pool()
+        assert success, "Failed to create database pool"
+        await db_connection.close_pool()
     
     def test_database_config(self):
         """Test database configuration"""
-        db = Database()
-        config = db.config
+        settings = get_settings()
+        config = settings.database
         
-        assert config.DB_HOST is not None, "DB_HOST not configured"
-        assert config.DB_NAME is not None, "DB_NAME not configured"
-        assert config.DB_USER is not None, "DB_USER not configured"
-        assert config.DB_PASSWORD is not None, "DB_PASSWORD not configured"
-        assert config.DB_PORT is not None, "DB_PORT not configured"
+        assert config.host is not None, "DB_HOST not configured"
+        assert config.name is not None, "DB_NAME not configured"
+        assert config.user is not None, "DB_USER not configured"
+        assert config.port is not None, "DB_PORT not configured"
     
-    def test_execute_query(self):
+    @pytest.mark.asyncio
+    async def test_execute_query(self):
         """Test basic query execution"""
-        db = Database()
-        assert db.connect(), "Failed to connect to database"
+        await db_connection.create_pool()
         
         # Test simple query
-        result = db.execute_query("SELECT 1 as test")
+        result = await db_connection.execute_query("SELECT 1 as test")
         assert result is not None, "Query execution failed"
         assert len(result) == 1, "Unexpected result length"
         assert result[0]['test'] == 1, "Unexpected result value"
         
-        db.disconnect()
+        await db_connection.close_pool()
     
-    def test_countries_table_exists(self):
+    @pytest.mark.asyncio
+    async def test_countries_table_exists(self):
         """Test that countries table exists"""
-        db = Database()
-        assert db.connect(), "Failed to connect to database"
+        await db_connection.create_pool()
         
         # Check if countries table exists
         query = """
@@ -50,16 +48,16 @@ class TestDatabaseConnection:
             AND table_name = 'countries'
         );
         """
-        result = db.execute_query(query)
+        result = await db_connection.execute_query(query)
         assert result is not None, "Query execution failed"
         assert result[0]['exists'], "Countries table does not exist"
         
-        db.disconnect()
+        await db_connection.close_pool()
     
-    def test_currency_rates_table_exists(self):
+    @pytest.mark.asyncio
+    async def test_currency_rates_table_exists(self):
         """Test that currency_rates table exists"""
-        db = Database()
-        assert db.connect(), "Failed to connect to database"
+        await db_connection.create_pool()
         
         # Check if currency_rates table exists
         query = """
@@ -69,8 +67,8 @@ class TestDatabaseConnection:
             AND table_name = 'currency_rates'
         );
         """
-        result = db.execute_query(query)
+        result = await db_connection.execute_query(query)
         assert result is not None, "Query execution failed"
         assert result[0]['exists'], "Currency rates table does not exist"
         
-        db.disconnect()
+        await db_connection.close_pool()

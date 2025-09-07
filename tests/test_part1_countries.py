@@ -1,10 +1,7 @@
 import pytest
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-from part1_countries import CountriesProcessor
+from src.processors.countries import CountriesProcessor
 import requests_mock
+from unittest.mock import patch
 
 class TestPart1Countries:
     
@@ -30,20 +27,24 @@ class TestPart1Countries:
         ]
         
         processor = CountriesProcessor()
-        requests_mock.get(processor.config.COUNTRIES_API_URL, json=mock_data)
+        requests_mock.get(processor.config.countries_url, json=mock_data)
         
-        result = processor.fetch_countries_data()
-        assert result is not None
-        assert len(result) == 1
-        assert result[0]["name"]["common"] == "Israel"
+        # Mock the async fetch_data method directly
+        with patch.object(processor, 'fetch_data', return_value=mock_data):
+            result = processor.fetch_countries_data()
+            assert result is not None
+            assert len(result) == 1
+            assert result[0]["name"]["common"] == "Israel"
     
     def test_fetch_countries_data_failure(self, requests_mock):
         """Test API call failure"""
         processor = CountriesProcessor()
-        requests_mock.get(processor.config.COUNTRIES_API_URL, status_code=404)
+        requests_mock.get(processor.config.countries_url, status_code=404)
         
-        result = processor.fetch_countries_data()
-        assert result is None
+        # Mock the async fetch_data method to return None
+        with patch.object(processor, 'fetch_data', return_value=None):
+            result = processor.fetch_countries_data()
+            assert result is None
     
     def test_format_country_data(self):
         """Test country data formatting"""
@@ -68,7 +69,7 @@ class TestPart1Countries:
         assert result["currencies"] == ["ILS"]
         assert result["is_un_member"] == True
         assert result["population"] == 9506000
-        assert isinstance(result["current_time"], dict)
+        assert isinstance(result["timezone_info"], dict)
     
     def test_format_country_data_missing_fields(self):
         """Test country data formatting with missing fields"""

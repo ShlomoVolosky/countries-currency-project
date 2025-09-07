@@ -1,11 +1,10 @@
 import pytest
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-from part3_scheduler import AutomatedScheduler
+from src.scheduler.runner import SchedulerRunner
 from unittest.mock import patch, MagicMock
 import schedule
+
+# Alias for backward compatibility
+AutomatedScheduler = SchedulerRunner
 
 class TestPart3Scheduler:
     
@@ -15,65 +14,69 @@ class TestPart3Scheduler:
         assert scheduler.countries_processor is not None
         assert scheduler.currency_processor is not None
     
-    @patch('part3_scheduler.CountriesProcessor')
+    @patch('src.processors.countries.CountriesProcessor')
     def test_run_countries_update_success(self, mock_countries_processor):
         """Test successful countries update"""
         # Mock successful processing
         mock_instance = MagicMock()
-        mock_instance.process_and_save_countries.return_value = True
+        mock_instance.process.return_value = True
         mock_countries_processor.return_value = mock_instance
         
         scheduler = AutomatedScheduler()
         scheduler.countries_processor = mock_instance
         
         # Should not raise exception
-        scheduler.run_countries_update()
-        mock_instance.process_and_save_countries.assert_called_once()
+        import asyncio
+        asyncio.run(scheduler.run_countries_update())
+        mock_instance.process.assert_called_once()
     
-    @patch('part3_scheduler.CountriesProcessor')
+    @patch('src.processors.countries.CountriesProcessor')
     def test_run_countries_update_failure(self, mock_countries_processor):
         """Test countries update failure"""
         # Mock failed processing
         mock_instance = MagicMock()
-        mock_instance.process_and_save_countries.return_value = False
+        mock_instance.process.return_value = False
         mock_countries_processor.return_value = mock_instance
         
         scheduler = AutomatedScheduler()
         scheduler.countries_processor = mock_instance
         
         # Should not raise exception
-        scheduler.run_countries_update()
-        mock_instance.process_and_save_countries.assert_called_once()
+        import asyncio
+        asyncio.run(scheduler.run_countries_update())
+        mock_instance.process.assert_called_once()
     
-    @patch('part3_scheduler.CurrencyProcessor')
+    @patch('src.processors.currencies.CurrencyProcessor')
     def test_run_currency_update_success(self, mock_currency_processor):
         """Test successful currency update"""
         # Mock successful processing
         mock_instance = MagicMock()
-        mock_instance.process_currency_rates.return_value = True
+        mock_instance.process.return_value = True
         mock_currency_processor.return_value = mock_instance
         
         scheduler = AutomatedScheduler()
         scheduler.currency_processor = mock_instance
         
         # Should not raise exception
-        scheduler.run_currency_update()
-        mock_instance.process_currency_rates.assert_called_once()
+        import asyncio
+        asyncio.run(scheduler.run_currency_update())
+        mock_instance.process.assert_called_once()
     
-    @patch('part3_scheduler.CurrencyProcessor')
+    @patch('src.processors.currencies.CurrencyProcessor')
     def test_run_currency_update_failure(self, mock_currency_processor):
         """Test currency update failure"""
         # Mock failed processing
         mock_instance = MagicMock()
-        mock_instance.process_currency_rates.return_value = False
+        mock_instance.process.return_value = False
         mock_currency_processor.return_value = mock_instance
         
         scheduler = AutomatedScheduler()
         scheduler.currency_processor = mock_instance
         
         # Should not raise exception
-        scheduler.run_currency_update()
-        mock_instance.process_currency_rates.assert_called_once()
+        import asyncio
+        asyncio.run(scheduler.run_currency_update())
+        mock_instance.process.assert_called_once()
     
     def test_setup_schedule(self):
         """Test schedule setup"""
@@ -91,41 +94,43 @@ class TestPart3Scheduler:
         # Clear schedules after test
         schedule.clear()
     
-    @patch('part3_scheduler.AutomatedScheduler.run_countries_update')
-    @patch('part3_scheduler.AutomatedScheduler.run_currency_update')
+    @patch('src.scheduler.runner.SchedulerRunner.run_countries_update')
+    @patch('src.scheduler.runner.SchedulerRunner.run_currency_update')
     def test_run_initial_setup(self, mock_currency_update, mock_countries_update):
         """Test initial setup runs both updates"""
         scheduler = AutomatedScheduler()
         
-        scheduler.run_initial_setup()
+        scheduler.run_initial_setup_sync()
         
         mock_countries_update.assert_called_once()
         mock_currency_update.assert_called_once()
     
-    @patch('part3_scheduler.CountriesProcessor')
+    @patch('src.processors.countries.CountriesProcessor')
     def test_run_countries_update_exception_handling(self, mock_countries_processor):
         """Test exception handling in countries update"""
         # Mock exception
         mock_instance = MagicMock()
-        mock_instance.process_and_save_countries.side_effect = Exception("Test exception")
+        mock_instance.process.side_effect = Exception("Test exception")
         mock_countries_processor.return_value = mock_instance
         
         scheduler = AutomatedScheduler()
         scheduler.countries_processor = mock_instance
         
         # Should not raise exception, should handle it gracefully
-        scheduler.run_countries_update()
+        import asyncio
+        asyncio.run(scheduler.run_countries_update())
     
-    @patch('part3_scheduler.CurrencyProcessor')
+    @patch('src.processors.currencies.CurrencyProcessor')
     def test_run_currency_update_exception_handling(self, mock_currency_processor):
         """Test exception handling in currency update"""
         # Mock exception
         mock_instance = MagicMock()
-        mock_instance.process_currency_rates.side_effect = Exception("Test exception")
+        mock_instance.process.side_effect = Exception("Test exception")
         mock_currency_processor.return_value = mock_instance
         
         scheduler = AutomatedScheduler()
         scheduler.currency_processor = mock_instance
         
         # Should not raise exception, should handle it gracefully
-        scheduler.run_currency_update()
+        import asyncio
+        asyncio.run(scheduler.run_currency_update())
