@@ -78,8 +78,7 @@ class TestPart2Currencies:
         countries = processor.get_all_countries_with_currencies()
         assert isinstance(countries, list)
     
-    @requests_mock.Mocker()
-    def test_process_currency_rates_no_countries(self, m):
+    def test_process_currency_rates_no_countries(self, requests_mock):
         """Test processing when no countries exist"""
         processor = CurrencyProcessor()
         
