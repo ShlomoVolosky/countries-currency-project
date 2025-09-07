@@ -81,7 +81,13 @@ run_db_init() {
     export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
     
     # Run database initialization
-    if python -m src.database.init_db --reset="$RESET_DB"; then
+    if [ "$RESET_DB" = "true" ]; then
+        python -m src.database.init_db --reset
+    else
+        python -m src.database.init_db
+    fi
+    
+    if [ $? -eq 0 ]; then
         print_status "Database initialization completed successfully"
     else
         print_error "Database initialization failed"

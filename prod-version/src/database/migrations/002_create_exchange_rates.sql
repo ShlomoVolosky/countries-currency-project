@@ -15,6 +15,15 @@ CREATE TABLE IF NOT EXISTS currency_rates (
     UNIQUE(country_name, currency_code, rate_date)
 );
 
+-- Add updated_at column if it doesn't exist (for existing tables)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'currency_rates' AND column_name = 'updated_at') THEN
+        ALTER TABLE currency_rates ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+END $$;
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_currency_rates_country ON currency_rates(country_name);
 CREATE INDEX IF NOT EXISTS idx_currency_rates_currency ON currency_rates(currency_code);

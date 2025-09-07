@@ -253,6 +253,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Database initialization tool")
     parser.add_argument("--reset", action="store_true", help="Reset database before initialization")
+    parser.add_argument("--no-reset", action="store_true", help="Skip database reset")
     parser.add_argument("--status", action="store_true", help="Show database status")
     
     args = parser.parse_args()
@@ -268,7 +269,8 @@ if __name__ == "__main__":
         for migration in status['migrations_executed']:
             print(f"    - {migration}")
     else:
-        success = initialize_database(reset=args.reset)
+        reset_db = args.reset and not args.no_reset
+        success = initialize_database(reset=reset_db)
         if success:
             print("Database initialization completed successfully")
         else:

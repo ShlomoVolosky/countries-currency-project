@@ -9,7 +9,7 @@ import json
 import logging
 from typing import Optional, List, Dict, Any, Union
 from contextlib import contextmanager
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 import psycopg2

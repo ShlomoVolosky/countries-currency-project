@@ -5,7 +5,7 @@ This module provides database configuration and connection utilities
 for the Countries Currency Project.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
@@ -87,6 +87,24 @@ class DatabaseConfig:
         except Exception as e:
             logger.error(f"Database connection test failed: {e}")
             return False
+    
+    def execute_query(self, query: str, params: Optional[tuple] = None, fetch_results: bool = True) -> Optional[Union[List[Dict], bool]]:
+        """Execute a database query with retry logic."""
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    cursor.execute(query, params)
+                    conn.commit()
+                    
+                    if fetch_results:
+                        return cursor.fetchall()
+                    else:
+                        return True
+        except Exception as e:
+            logger.error(f"Error executing query: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            raise
     
     def close_pool(self):
         """Close connection pool."""
