@@ -102,6 +102,95 @@ countries-currency-project/
     └── 📜 part*.py               # Legacy components (for compatibility)
 ```
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph "External APIs"
+        RCA[REST Countries API]
+        FA[Frankfurter API]
+    end
+    
+    subgraph "Docker Compose Stack"
+        subgraph "Application Layer"
+            APP[FastAPI App<br/>:8000]
+            API[API Routes<br/>Countries/Currencies/Health]
+        end
+        
+        subgraph "Data Processing"
+            AF_WS[Airflow Webserver<br/>:8080]
+            AF_SCH[Airflow Scheduler]
+            DAG1[Countries DAG]
+            DAG2[Currencies DAG]
+            DAG3[Combined DAG]
+        end
+        
+        subgraph "Data Layer"
+            PG[(PostgreSQL<br/>:5432<br/>countries_db)]
+            PG_AF[(PostgreSQL<br/>:5433<br/>airflow_db)]
+        end
+        
+        subgraph "Monitoring Stack"
+            PROM[Prometheus<br/>:9090]
+            GRAF[Grafana<br/>:3000]
+        end
+        
+        subgraph "Processing Components"
+            PROC1[Countries Processor]
+            PROC2[Currency Processor]
+            REPO[Database Repositories]
+        end
+    end
+    
+    subgraph "External Access"
+        USER[Users/Developers]
+        MON[Monitoring Users]
+    end
+    
+    %% Data Flow
+    RCA --> PROC1
+    FA --> PROC2
+    PROC1 --> REPO
+    PROC2 --> REPO
+    REPO --> PG
+    
+    %% API Flow
+    USER --> APP
+    APP --> API
+    API --> REPO
+    REPO --> PG
+    
+    %% Airflow Flow
+    AF_SCH --> DAG1
+    AF_SCH --> DAG2
+    AF_SCH --> DAG3
+    DAG1 --> PROC1
+    DAG2 --> PROC2
+    DAG3 --> PROC1
+    DAG3 --> PROC2
+    AF_WS --> AF_SCH
+    AF_SCH --> PG_AF
+    
+    %% Monitoring Flow
+    APP --> PROM
+    PROM --> GRAF
+    MON --> GRAF
+    MON --> AF_WS
+    
+    %% Styling
+    classDef api fill:#e1f5fe
+    classDef database fill:#f3e5f5
+    classDef monitoring fill:#e8f5e8
+    classDef processing fill:#fff3e0
+    classDef external fill:#fce4ec
+    
+    class RCA,FA external
+    class PG,PG_AF database
+    class PROM,GRAF monitoring
+    class PROC1,PROC2,REPO,DAG1,DAG2,DAG3 processing
+    class APP,API,AF_WS,AF_SCH api
+```
+
 ## 🛠️ Technology Stack
 
 | Component | Technology | Purpose |
