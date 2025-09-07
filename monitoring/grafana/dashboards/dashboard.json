@@ -274,7 +274,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "countries_processed_total",
+          "expr": "countries_in_database",
           "instant": false,
           "legendFormat": "Total Countries",
           "range": true,
@@ -341,7 +341,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "currency_rates_processed_total",
+          "expr": "currency_rates_in_database",
           "instant": false,
           "legendFormat": "Total Currency Rates",
           "range": true,

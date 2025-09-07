@@ -8,6 +8,7 @@ from src.database.connection import db_connection
 from src.config.settings import get_settings
 from src.utils.logger import get_logger
 from src.monitoring.middleware import PrometheusMiddleware
+from src.monitoring.metrics import update_countries_count, update_currency_rates_count
 
 logger = get_logger("api")
 settings = get_settings()
@@ -17,6 +18,23 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     await db_connection.create_pool()
     logger.info("Application started")
+    
+    # Update metrics with current data counts
+    try:
+        from src.database.repositories import CountryRepository, CurrencyRateRepository
+        countries_repo = CountryRepository()
+        currencies_repo = CurrencyRateRepository()
+        
+        countries_count = len(await countries_repo.list_all(limit=1000))
+        currencies_count = len(await currencies_repo.list_all(limit=1000))
+        
+        update_countries_count(countries_count)
+        update_currency_rates_count(currencies_count)
+        
+        logger.info(f"Updated metrics: {countries_count} countries, {currencies_count} currency rates")
+    except Exception as e:
+        logger.error(f"Failed to update initial metrics: {e}")
+    
     yield
     await db_connection.close_pool()
     logger.info("Application shutdown")

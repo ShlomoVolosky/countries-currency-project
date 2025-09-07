@@ -34,6 +34,17 @@ currency_rates_processed_total = Counter(
     ['status']
 )
 
+# Current Data Metrics
+countries_in_database = Gauge(
+    'countries_in_database',
+    'Current number of countries in database'
+)
+
+currency_rates_in_database = Gauge(
+    'currency_rates_in_database',
+    'Current number of currency rates in database'
+)
+
 api_calls_total = Counter(
     'api_calls_total',
     'Total number of API calls',
@@ -113,14 +124,14 @@ def track_http_requests(func: Callable) -> Callable:
     return wrapper
 
 
-def track_countries_processed(status: str = 'success'):
+def track_countries_processed(status: str = 'success', count: int = 1):
     """Track countries processing metrics"""
-    countries_processed_total.labels(status=status).inc()
+    countries_processed_total.labels(status=status).inc(count)
 
 
-def track_currency_rates_processed(status: str = 'success'):
+def track_currency_rates_processed(status: str = 'success', count: int = 1):
     """Track currency rates processing metrics"""
-    currency_rates_processed_total.labels(status=status).inc()
+    currency_rates_processed_total.labels(status=status).inc(count)
 
 
 def track_api_call(service: str, status: str = 'success'):
@@ -131,3 +142,13 @@ def track_api_call(service: str, status: str = 'success'):
 def update_active_connections(count: int):
     """Update active database connections metric"""
     active_connections.set(count)
+
+
+def update_countries_count(count: int):
+    """Update current countries count in database"""
+    countries_in_database.set(count)
+
+
+def update_currency_rates_count(count: int):
+    """Update current currency rates count in database"""
+    currency_rates_in_database.set(count)

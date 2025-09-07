@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from src.database.repositories import CountryRepository
 from src.models.country import Country
 from src.models.api import CountriesListResponse, APIResponse
-from src.monitoring.metrics import track_countries_processed, track_api_call
+from src.monitoring.metrics import track_countries_processed, track_api_call, update_countries_count
 
 router = APIRouter()
 repository = CountryRepository()
@@ -43,12 +43,17 @@ async def process_countries():
         success = await processor.process()
         
         if success:
+            # Get the actual count of countries processed
+            from src.database.repositories import CountryRepository
+            repo = CountryRepository()
+            countries_count = len(await repo.list_all(limit=1000))
             track_countries_processed("success")
+            update_countries_count(countries_count)
             track_api_call("countries_processor", "success")
             return APIResponse(
                 success=True,
-                message="Countries data processing completed successfully",
-                data={"processed": True}
+                message=f"Countries data processing completed successfully. Total countries: {countries_count}",
+                data={"processed": True, "count": countries_count}
             )
         else:
             track_countries_processed("failed")

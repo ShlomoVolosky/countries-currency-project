@@ -4,7 +4,7 @@ from datetime import date
 from src.database.repositories import CurrencyRateRepository
 from src.models.currency import CurrencyRate
 from src.models.api import CurrencyRatesResponse, APIResponse
-from src.monitoring.metrics import track_currency_rates_processed, track_api_call
+from src.monitoring.metrics import track_currency_rates_processed, track_api_call, update_currency_rates_count
 
 router = APIRouter()
 repository = CurrencyRateRepository()
@@ -58,12 +58,17 @@ async def process_currencies():
         success = await processor.process()
         
         if success:
+            # Get the actual count of currency rates processed
+            from src.database.repositories import CurrencyRateRepository
+            repo = CurrencyRateRepository()
+            rates_count = len(await repo.list_all(limit=1000))
             track_currency_rates_processed("success")
+            update_currency_rates_count(rates_count)
             track_api_call("currency_processor", "success")
             return APIResponse(
                 success=True,
-                message="Currencies data processing completed successfully",
-                data={"processed": True}
+                message=f"Currencies data processing completed successfully. Total currency rates: {rates_count}",
+                data={"processed": True, "count": rates_count}
             )
         else:
             track_currency_rates_processed("failed")
